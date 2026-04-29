@@ -1,0 +1,69 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="margin: 0; font-weight: 700; font-size: 32px;">Product Catalog</h1>
+        <button class="btn" onclick="document.getElementById('product-modal').style.display='flex'">+ Add New Product</button>
+    </div>
+    
+    <div class="card" style="padding: 0;">
+        <table style="margin-top: 0; border-radius: 0;">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>SKU</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Model Class</th>
+            </tr>
+            {% for p in products %}
+            <tr>
+                <td style="font-weight: 500;">{{ p.product_id }}</td>
+                <td style="font-weight: 600; color: var(--text-dark);">{{ p.product_name }}</td>
+                <td style="color: var(--text-muted);">{{ p.sku }}</td>
+                <td style="color: #0ea5e9; font-weight: 600;">₹{{ p.price }}</td>
+                <td>{{ p.stock }}</td>
+                <td><span style="background: #fef3c7; color: #d97706; padding: 6px 10px; border-radius: 6px; font-size: 13px; font-family: monospace; font-weight: 600;">{{ p.model_class_name }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No products found in the database.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <!-- Modal for adding product -->
+    <div id="product-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.4); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000;">
+        <div class="card" style="width: 100%; max-width: 450px; margin: 0; position: relative;">
+            <h2 style="margin-top: 0; margin-bottom: 25px; font-weight: 700;">Add New Product</h2>
+            <form id="add-product-form">
+                <input type="text" name="name" placeholder="Product Name" style="width:100%; padding:14px; margin:8px 0; background:#f8fafc; color:var(--text-dark); border:1px solid var(--border-color); border-radius:10px; box-sizing:border-box; transition: 0.3s;" required>
+                <input type="text" name="sku" placeholder="SKU" style="width:100%; padding:14px; margin:8px 0; background:#f8fafc; color:var(--text-dark); border:1px solid var(--border-color); border-radius:10px; box-sizing:border-box; transition: 0.3s;" required>
+                <input type="text" name="category" placeholder="Category" style="width:100%; padding:14px; margin:8px 0; background:#f8fafc; color:var(--text-dark); border:1px solid var(--border-color); border-radius:10px; box-sizing:border-box; transition: 0.3s;">
+                <input type="number" step="0.01" name="price" placeholder="Price" style="width:100%; padding:14px; margin:8px 0; background:#f8fafc; color:var(--text-dark); border:1px solid var(--border-color); border-radius:10px; box-sizing:border-box; transition: 0.3s;" required>
+                <input type="number" name="stock" placeholder="Stock Quantity" style="width:100%; padding:14px; margin:8px 0; background:#f8fafc; color:var(--text-dark); border:1px solid var(--border-color); border-radius:10px; box-sizing:border-box; transition: 0.3s;" required>
+                <input type="text" name="model_class_name" placeholder="YOLO Class Name (e.g. coke_can)" style="width:100%; padding:14px; margin:8px 0; background:#f8fafc; color:var(--text-dark); border:1px solid var(--border-color); border-radius:10px; box-sizing:border-box; transition: 0.3s;" required>
+                <div style="display: flex; gap: 15px; margin-top: 25px;">
+                    <button type="submit" class="btn" style="flex: 1;">Save Product</button>
+                    <button type="button" class="btn" style="flex: 1; background:#f1f5f9; color: var(--text-dark); box-shadow: none;" onclick="document.getElementById('product-modal').style.display='none'">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        input:focus { border-color: var(--primary) !important; outline: none; background: white !important; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+    </style>
+
+    <script>
+        document.getElementById('add-product-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const response = await fetch('/api/products', { method: 'POST', body: formData });
+            const result = await response.json();
+            if(result.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        });
+    </script>
+{% endblock %}

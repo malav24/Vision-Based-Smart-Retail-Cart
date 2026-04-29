@@ -1,0 +1,144 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+    <h1 style="margin-top: 0; font-weight: 700; font-size: 32px; margin-bottom: 30px;">CV Model Training Pipeline</h1>
+    <div style="display: flex; gap: 30px; margin-bottom: 35px;">
+        <!-- Dataset Upload section -->
+        <div class="card" style="flex: 1; text-align: center;">
+            <h3 style="font-weight: 600; margin-bottom: 10px;">1. Upload Dataset</h3>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Upload a Roboflow YOLOv8 PyTorch `.zip` export.</p>
+            
+            <label id="dropzone" style="display: block; border: 2px dashed var(--border-color); border-radius: 12px; padding: 40px; cursor: pointer; transition: 0.3s; background: #f8fafc;">
+                <div style="font-size: 30px; margin-bottom: 10px;">📦</div>
+                <div style="font-weight: 600; color: var(--primary);">Click to Browse or Drag Zip</div>
+                <input type="file" id="datasetInput" accept=".zip" style="display: none;">
+            </label>
+            <div id="uploadStatus" style="margin-top: 15px; font-weight: 500; font-size: 14px;"></div>
+        </div>
+
+        <div class="card" style="flex: 1; border-left: 5px solid var(--primary); display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 10px;">🤖</div>
+            <h3 style="font-weight: 600; margin-bottom: 5px;">2. Train Intelligence</h3>
+            <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 15px; max-width: 80%; font-size: 14px;">Once dataset is processed, trigger the YOLOv8 AI training background job.</p>
+            
+            <div style="display: flex; gap: 10px; align-items: center; justify-content: center; width: 80%; margin-bottom: 15px;">
+                <label>Epochs:</label>
+                <input type="number" id="trainEpochs" value="20" min="1" max="100" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); font-family: Outfit; width: 60px;">
+            </div>
+            
+            <button class="btn" onclick="startTraining()" id="trainBtn" disabled style="width: 80%; padding: 15px; font-size: 16px; opacity: 0.5; cursor: not-allowed;">🚀 Start YOLO Training</button>
+        </div>
+    </div>
+
+    <!-- Active classes -->
+    <div class="card" style="margin-bottom: 35px;">
+        <h3 style="font-weight: 600; margin-bottom: 20px;">Detected Dataset Classes</h3>
+        <ul id="classList" style="display: flex; gap: 10px; flex-wrap: wrap; list-style-type: none; padding-left: 0; margin: 0;">
+            <li style="padding: 10px 15px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-muted);">None uploaded yet.</li>
+        </ul>
+    </div>
+
+    <!-- versions table -->
+    <div class="card" style="padding: 0;">
+        <h3 style="padding: 25px 25px 5px 25px; margin: 0; border-bottom: none;">Model Jobs & Versions</h3>
+        <table style="margin-top: 15px; border-radius: 0;">
+            <tr>
+                <th>Job ID</th>
+                <th>Status</th>
+                <th>Start Time</th>
+                <th>Action</th>
+            </tr>
+            {% for j in jobs %}
+            <tr>
+                <td style="font-weight: 600;">#{{ j.job_id }}</td>
+                <td>
+                    {% if j.status == 'success' %}
+                    <span style="color: #16a34a; font-weight: 600;">Completed</span>
+                    {% elif j.status == 'running' %}
+                    <span style="color: var(--primary); font-weight: 600;">Running</span>
+                    {% else %}
+                    <span style="color: var(--text-muted);">{{ j.status }}</span>
+                    {% endif %}
+                </td>
+                <td style="color: var(--text-muted);">{{ j.start_time }}</td>
+                <td>
+                    {% if j.status == 'success' %}
+                    <span style="background: #e0e7ff; color: var(--primary); padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600;">Weights Saved</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 40px;">No training jobs found.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+    
+    <script>
+        const input = document.getElementById('datasetInput');
+        const status = document.getElementById('uploadStatus');
+        const classList = document.getElementById('classList');
+        const trainBtn = document.getElementById('trainBtn');
+        const dropzone = document.getElementById('dropzone');
+
+        input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            const formData = new FormData();
+            formData.append('dataset', file);
+            
+            status.textContent = "⏳ Uploading and extracting ZIP...";
+            status.style.color = "var(--primary)";
+            dropzone.style.borderColor = "var(--primary)";
+            
+            try {
+                const res = await fetch('/api/training/upload', { method: 'POST', body: formData });
+                const data = await res.json();
+                if(data.success) {
+                    status.textContent = "✅ " + data.msg;
+                    status.style.color = "#10b981";
+                    
+                    if(data.classes && data.classes.length > 0) {
+                        classList.innerHTML = '';
+                        data.classes.forEach(c => {
+                            classList.innerHTML += `<li style="padding: 10px 15px; background: #e0e7ff; color: var(--primary); border-radius: 8px; font-weight: 600; font-family: monospace;">${c}</li>`;
+                        });
+                    }
+                    
+                    trainBtn.disabled = false;
+                    trainBtn.style.opacity = '1';
+                    trainBtn.style.cursor = 'pointer';
+                } else {
+                    status.textContent = "❌ " + data.error;
+                    status.style.color = "#ef4444";
+                    dropzone.style.borderColor = "#ef4444";
+                }
+            } catch(err) {
+                status.textContent = "❌ Network Error";
+            }
+        });
+
+        async function startTraining() {
+            const epochs = document.getElementById('trainEpochs').value;
+            trainBtn.disabled = true;
+            trainBtn.innerHTML = "⏳ Triggering Background Job...";
+            
+            try {
+                const res = await fetch('/api/training/start', {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({epochs: epochs})
+                });
+                const data = await res.json();
+                
+                if(data.success) {
+                    alert('Training Job #' + data.job_id + ' has started safely in the background!\n\nYou can continue navigating the dashboard without interrupting it.');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch(e) {
+                alert('Connection failed.');
+            }
+        }
+    </script>
+{% endblock %}

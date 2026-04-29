@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Dropbox System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --bg-color: #f8fafc;
+            --surface-color: #ffffff;
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --secondary: #0ea5e9;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg-color);
+            background-image: radial-gradient(circle at top right, #e0e7ff 0%, transparent 40%),
+                              radial-gradient(circle at bottom left, #e0f2fe 0%, transparent 40%);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0 0 15px 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .cards-container {
+            display: flex;
+            gap: 40px;
+            max-width: 1000px;
+            width: 90%;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .card {
+            flex: 1;
+            background: var(--surface-color);
+            border-radius: 24px;
+            padding: 50px 40px;
+            text-align: center;
+            text-decoration: none;
+            box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 30px 60px rgba(15, 23, 42, 0.1);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background: #f1f5f9;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 25px;
+            font-size: 36px;
+            transition: transform 0.3s;
+        }
+
+        .card:hover .icon-wrapper {
+            transform: scale(1.1);
+            background: #e0e7ff;
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            color: var(--text-dark);
+            margin: 0 0 15px 0;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin: 0 0 30px 0;
+        }
+
+        .btn-arrow {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .btn-arrow span {
+            margin-left: 8px;
+            transition: transform 0.3s;
+        }
+
+        .card:hover .btn-arrow span {
+            transform: translateX(5px);
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .cards-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Welcome to Smart Dropbox</h1>
+        <p>A next-generation AI-powered checkout system. Please select your portal to continue.</p>
+    </div>
+
+    <div class="cards-container">
+        <!-- Dropbox / Customer Interface -->
+        <a href="/dropbox" class="card">
+            <div class="icon-wrapper">
+                📦
+            </div>
+            <h2>Smart Dropbox</h2>
+            <p>Customer checkout interface. Place items in the dropbox for real-time automatic AI billing and cart management.</p>
+            <div class="btn-arrow">
+                Start Session <span>→</span>
+            </div>
+        </a>
+
+        <!-- Admin Interface -->
+        <a href="/admin/login" class="card">
+            <div class="icon-wrapper">
+                ⚙️
+            </div>
+            <h2>Admin Panel</h2>
+            <p>Access the backend dashboard to manage products, view sales reports, and train new AI vision models.</p>
+            <div class="btn-arrow">
+                Login <span>→</span>
+            </div>
+        </a>
+    </div>
+
+</body>
+</html>

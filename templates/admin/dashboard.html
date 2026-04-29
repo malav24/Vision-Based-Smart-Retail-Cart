@@ -1,0 +1,36 @@
+{% extends 'admin/base.html' %}
+{% block content %}
+    <h1 style="margin-top: 0; font-weight: 700; font-size: 32px; margin-bottom: 30px;">Dashboard Overview</h1>
+    <div style="display: flex; gap: 25px; margin-bottom: 35px;">
+        <div class="card" style="flex: 1; border-left: 5px solid var(--primary);">
+            <h3 style="color: var(--text-muted); margin-top:0; font-weight: 500;">Total Sales</h3>
+            <h2 style="font-size: 42px; margin: 10px 0 0 0; color: var(--text-dark);">₹{{ stats.total_sales }}</h2>
+        </div>
+        <div class="card" style="flex: 1; border-left: 5px solid #0ea5e9;">
+            <h3 style="color: var(--text-muted); margin-top:0; font-weight: 500;">Products in Catalog</h3>
+            <h2 style="font-size: 42px; margin: 10px 0 0 0; color: var(--text-dark);">{{ stats.products_count }}</h2>
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3>Recent Billing Sessions</h3>
+        <table>
+            <tr>
+                <th>Session ID</th>
+                <th>Time</th>
+                <th>Total</th>
+                <th>Status</th>
+            </tr>
+            {% for session in recent_sessions %}
+            <tr>
+                <td style="font-weight: 500;">#{{ session.session_id }}</td>
+                <td style="color: var(--text-muted);">{{ session.start_time }}</td>
+                <td style="color: #0ea5e9; font-weight: 600;">${{ session.total_amount }}</td>
+                <td><span style="background: #e0f2fe; color: #0284c7; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600;">{{ session.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 30px;">No recent sessions found.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+{% endblock %}

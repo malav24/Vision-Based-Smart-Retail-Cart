@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>iPhone Camera Detection</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --surface: #1e293b;
+            --border: #475569;
+            --text: #f1f5f9;
+            --text-muted: #cbd5e1;
+        }
+        
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-dark);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+        
+        .camera-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-dark);
+        }
+        
+        /* Header */
+        .camera-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            position: relative;
+            z-index: 10;
+        }
+        
+        .header-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 18px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        /* Video Feed Area */
+        .video-section {
+            flex: 1;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+        }
+        
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        /* Canvas for capturing frames (hidden) */
+        #capture-canvas {
+            display: none;
+        }
+        
+        /* Status Indicator */
+        .status-badge {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(16, 185, 129, 0.95);
+            padding: 10px 16px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            z-index: 5;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            animation: pulse-dot 2s infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.8); }
+        }
+        
+        /* Detection Results Panel */
+        .detection-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            z-index: 5;
+            max-height: 200px;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .detection-count {
+            background: var(--primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 28px;
+            text-align: center;
+        }
+        
+        .detected-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .detected-item {
+            background: rgba(79, 70, 229, 0.15);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+            animation: itemSlide 0.3s ease-out;
+        }
+        
+        @keyframes itemSlide {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .item-info {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+        
+        .item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        
+        .item-confidence {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .item-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--success);
+            min-width: 70px;
+            text-align: right;
+        }
+        
+        .add-btn {
+            margin-left: 12px;
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+        
+        .add-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+        
+        .add-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .no-items {
+            color: var(--text-muted);
+            font-size: 13px;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        /* Bottom Controls */
+        .camera-controls {
+            background: linear-gradient(to top, var(--surface), transparent);
+            padding: 20px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            z-index: 4;
+        }
+        
+        .control-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 100px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .control-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+        }
+        
+        .control-btn.secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+            padding: 10px 22px;
+        }
+        
+        .control-btn.secondary:hover {
+            background: rgba(79, 70, 229, 0.1);
+        }
+        
+        .control-btn.danger {
+            background: var(--danger);
+        }
+        
+        .control-btn.danger:hover {
+            background: #dc2626;
+        }
+        
+        /* Loading Spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            .camera-header {
+                padding: 12px 16px;
+            }
+            
+            .header-title {
+                font-size: 16px;
+            }
+            
+            .detection-panel {
+                max-height: 150px;
+                padding: 12px;
+            }
+            
+            .detected-item {
+                padding: 10px;
+                font-size: 13px;
+            }
+            
+            .control-btn {
+                padding: 10px 16px;
+                font-size: 14px;
+                min-width: 80px;
+            }
+        }
+        
+        /* iPhone Notch Support */
+        @supports (padding: max(0px)) {
+            .camera-header {
+                padding-top: max(16px, env(safe-area-inset-top));
+                padding-left: max(20px, env(safe-area-inset-left));
+                padding-right: max(20px, env(safe-area-inset-right));
+            }
+            
+            .camera-controls {
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="camera-container">
+        <!-- Header -->
+        <div class="camera-header">
+            <div class="header-title">
+                <span>📱 Camera Detection</span>
+            </div>
+            <div class="header-actions">
+                <button class="header-btn" id="toggle-camera" title="Toggle Camera">🔄</button>
+                <button class="header-btn" id="fullscreen-btn" title="Fullscreen">⛶</button>
+            </div>
+        </div>
+        
+        <!-- Video Section -->
+        <div class="video-section">
+            <video id="video-feed" playsinline autoplay muted></video>
+            <canvas id="capture-canvas"></canvas>
+            
+            <!-- Status Indicator -->
+            <div class="status-badge" id="status-badge">
+                <div class="status-dot"></div>
+                <span id="status-text">Initializing...</span>
+            </div>
+            
+            <!-- Detection Results Panel -->
+            <div class="detection-panel" id="detection-panel">
+                <div class="panel-title">
+                    Detected Items
+                    <span class="detection-count" id="item-count">0</span>
+                </div>
+                <div class="detected-items" id="detected-items">
+                    <div class="no-items">Waiting for detections...</div>
+                </div>
+            </div>
+            
+            <!-- Bottom Controls -->
+            <div class="camera-controls">
+                <button class="control-btn secondary" id="clear-btn">Clear</button>
+                <button class="control-btn" id="add-to-cart-btn">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        class MobileCamera {
+            constructor() {
+                this.video = document.getElementById('video-feed');
+                this.canvas = document.getElementById('capture-canvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.detections = [];
+                this.isProcessing = false;
+                this.captureInterval = null;
+                this.stream = null;
+                
+                this.init();
+                this.setupEventListeners();
+            }
+            
+            async init() {
+                try {
+                    const constraints = {
+                        video: {
+                            facingMode: 'environment',
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        },
+                        audio: false
+                    };
+                    
+                    this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    this.video.srcObject = this.stream;
+                    
+                    this.video.onloadedmetadata = () => {
+                        this.canvas.width = this.video.videoWidth;
+                        this.canvas.height = this.video.videoHeight;
+                        this.startCapturing();
+                        this.updateStatus('Connected', 'ready');
+                    };
+                } catch (err) {
+                    console.error('Camera access error:', err);
+                    this.updateStatus('Camera Access Denied', 'error');
+                    alert('Please allow camera access to use this feature.');
+                }
+            }
+            
+            setupEventListeners() {
+                document.getElementById('add-to-cart-btn').addEventListener('click', () => this.addToCart());
+                document.getElementById('clear-btn').addEventListener('click', () => this.clearDetections());
+                document.getElementById('toggle-camera').addEventListener('click', () => this.toggleCamera());
+                document.getElementById('fullscreen-btn').addEventListener('click', () => this.requestFullscreen());
+            }
+            
+            startCapturing() {
+                // Capture frames every 1 second for processing
+                this.captureInterval = setInterval(() => this.captureFrame(), 1000);
+            }
+            
+            async captureFrame() {
+                if (this.isProcessing || !this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+                    return;
+                }
+                
+                this.isProcessing = true;
+                
+                try {
+                    this.ctx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+                    const blob = await new Promise(resolve => this.canvas.toBlob(resolve, 'image/jpeg', 0.8));
+                    
+                    await this.processFrame(blob);
+                } catch (err) {
+                    console.error('Frame capture error:', err);
+                } finally {
+                    this.isProcessing = false;
+                }
+            }
+            
+            async processFrame(blob) {
+                try {
+                    const formData = new FormData();
+                    formData.append('image', blob, 'frame.jpg');
+                    
+                    const response = await fetch('/api/mobile/detect', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    if (data.success) {
+                        this.updateDetections(data.items);
+                    }
+                } catch (err) {
+                    console.error('Frame processing error:', err);
+                    this.updateStatus('Processing Error', 'error');
+                }
+            }
+            
+            updateDetections(items) {
+                this.detections = items;
+                this.renderDetections();
+            }
+            
+            renderDetections() {
+                const container = document.getElementById('detected-items');
+                const count = document.getElementById('item-count');
+                
+                count.textContent = this.detections.length;
+                
+                if (this.detections.length === 0) {
+                    container.innerHTML = '<div class="no-items">No items detected</div>';
+                    this.updateStatus('Scanning...', 'scanning');
+                    return;
+                }
+                
+                this.updateStatus('Items Detected!', 'detected');
+                container.innerHTML = this.detections.map((item, idx) => `
+                    <div class="detected-item">
+                        <div class="item-info">
+                            <div class="item-name">${item.product_name}</div>
+                            <div class="item-confidence">Confidence: ${(item.confidence * 100).toFixed(1)}%</div>
+                        </div>
+                        <div class="item-price">$${item.price.toFixed(2)}</div>
+                        <button class="add-btn" onclick="mobileCamera.addItem(${idx})" title="Add to cart">+</button>
+                    </div>
+                `).join('');
+            }
+            
+            addItem(idx) {
+                const item = this.detections[idx];
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                cart.push({
+                    id: item.product_id,
+                    name: item.product_name,
+                    price: item.price
+                });
+                localStorage.setItem('cart', JSON.stringify(cart));
+                alert(`Added ${item.product_name} to cart!`);
+            }
+            
+            async addToCart() {
+                if (this.detections.length === 0) {
+                    alert('No items detected to add');
+                    return;
+                }
+                
+                const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+                this.detections.forEach(item => {
+                    cart.push({
+                        id: item.product_id,
+                        name: item.product_name,
+                        price: item.price
+                    });
+                });
+                localStorage.setItem('cart', JSON.stringify(cart));
+                alert(`Added ${this.detections.length} items to cart!`);
+                this.clearDetections();
+            }
+            
+            clearDetections() {
+                this.detections = [];
+                this.renderDetections();
+            }
+            
+            toggleCamera() {
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                    clearInterval(this.captureInterval);
+                    this.init();
+                }
+            }
+            
+            requestFullscreen() {
+                const elem = document.querySelector('.camera-container');
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                }
+            }
+            
+            updateStatus(text, status) {
+                document.getElementById('status-text').textContent = text;
+                document.getElementById('status-badge').style.background = 
+                    status === 'error' ? 'rgba(239, 68, 68, 0.95)' :
+                    status === 'detected' ? 'rgba(59, 130, 246, 0.95)' :
+                    'rgba(16, 185, 129, 0.95)';
+            }
+        }
+        
+        // Initialize when page loads
+        let mobileCamera;
+        document.addEventListener('DOMContentLoaded', () => {
+            mobileCamera = new MobileCamera();
+        });
+    </script>
+</body>
+</html>

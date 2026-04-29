@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login - Smart Dropbox</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Outfit', sans-serif; background: #f8fafc; background-image: radial-gradient(circle at top right, #e0e7ff 0%, transparent 40%), radial-gradient(circle at bottom left, #e0f2fe 0%, transparent 40%); color: #0f172a; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: #ffffff; padding: 50px 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.05); width: 100%; max-width: 400px; text-align: center; border: 1px solid #e2e8f0; }
+        .login-box h2 { font-weight: 700; margin-bottom: 30px; letter-spacing: -0.5px; font-size: 28px; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px; border: 1px solid #cbd5e1; background: #f8fafc; color: #0f172a; box-sizing: border-box; font-size: 15px; transition: all 0.3s; font-family: 'Outfit', sans-serif;}
+        input:focus { border-color: #4f46e5; outline: none; background: #ffffff; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
+        .btn { width: 100%; background: #4f46e5; color: white; padding: 15px; border: none; border-radius: 12px; cursor: pointer; font-size: 16px; font-weight: 600; margin-top: 20px; transition: all 0.3s; font-family: 'Outfit', sans-serif; }
+        .btn:hover { background: #4338ca; transform: translateY(-2px); box-shadow: 0 10px 20px rgba(79, 70, 229, 0.2); }
+        .error { color: #ef4444; margin-bottom: 20px; font-size: 14px; background: #fef2f2; padding: 12px; border-radius: 10px; border: 1px solid #fee2e2; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>Smart Dropbox Sign In</h2>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="btn">Login to Admin</button>
+        </form>
+    </div>
+</body>
+</html>
